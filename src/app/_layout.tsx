@@ -9,7 +9,7 @@ import FlashMessage from 'react-native-flash-message';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { useThemeConfig } from '@/components/ui/use-theme-config';
-import { hydrateAuth } from '@/features/auth/use-auth-store';
+import { hydrateAuth, useAuthStore as useAuth } from '@/features/auth/use-auth-store';
 
 import { APIProvider } from '@/lib/api';
 import { loadSelectedTheme } from '@/lib/hooks/use-selected-theme';
@@ -34,6 +34,20 @@ SplashScreen.setOptions({
 });
 
 export default function RootLayout() {
+  // Hide the splash screen here (root layout) rather than in a nested route's
+  // layout: nested layouts can unmount on redirect (e.g. first-time users get
+  // redirected from `(app)` to `/onboarding`), which would cancel a
+  // hide-splash timer before it fires and leave the splash stuck forever.
+  const status = useAuth.use.status();
+  React.useEffect(() => {
+    if (status === 'idle')
+      return;
+    const timer = setTimeout(() => {
+      SplashScreen.hideAsync();
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [status]);
+
   return (
     <Providers>
       <Stack>

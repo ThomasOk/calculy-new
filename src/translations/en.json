@@ -1,4 +1,32 @@
 {
+  "challenge": {
+    "confirm": "Confirm",
+    "erase": "Erase",
+    "finished": "Finished!",
+    "intro": {
+      "cancel": "Cancel",
+      "countdown": "Then the clock starts",
+      "operations": "Add, subtract, multiply",
+      "speed": "As fast as you can",
+      "start": "Start"
+    },
+    "quit": "Quit",
+    "restart": "Restart",
+    "results": {
+      "back": "Back to challenges",
+      "best_combo": "Best combo",
+      "clear": "Clear!",
+      "correct": "Correct",
+      "mistakes": "Mistakes",
+      "perfect": "Perfect!",
+      "time": "Time"
+    }
+  },
+  "home": {
+    "calculations": "calculations",
+    "problem_count": "{{count}} calculations",
+    "title": "Choose a challenge"
+  },
   "onboarding": {
     "message": "Welcome to obytes app site"
   },

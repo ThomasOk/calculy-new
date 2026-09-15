@@ -1,4 +1,32 @@
 {
+  "challenge": {
+    "confirm": "تأكيد",
+    "erase": "مسح",
+    "finished": "انتهى!",
+    "intro": {
+      "cancel": "إلغاء",
+      "countdown": "ثم يبدأ المؤقت",
+      "operations": "جمع، طرح، ضرب",
+      "speed": "بأسرع ما يمكن",
+      "start": "ابدأ"
+    },
+    "quit": "خروج",
+    "restart": "إعادة",
+    "results": {
+      "back": "العودة إلى التحديات",
+      "best_combo": "أفضل سلسلة",
+      "clear": "انتهى!",
+      "correct": "صحيحة",
+      "mistakes": "أخطاء",
+      "perfect": "مثالي!",
+      "time": "الوقت"
+    }
+  },
+  "home": {
+    "calculations": "عملية حسابية",
+    "problem_count": "{{count}} عملية حسابية",
+    "title": "اختر تحديًا"
+  },
   "onboarding": {
     "message": "مرحبا بكم في موقع تطبيق obytes"
   },

@@ -82,6 +82,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
             'node_modules/@expo-google-fonts/inter/500Medium/Inter_500Medium.ttf',
             'node_modules/@expo-google-fonts/inter/600SemiBold/Inter_600SemiBold.ttf',
             'node_modules/@expo-google-fonts/inter/700Bold/Inter_700Bold.ttf',
+            // Challenge digits. One weight only: each is ~3.5 MB, the font
+            // carries Japanese glyphs.
+            'node_modules/@expo-google-fonts/m-plus-rounded-1c/700Bold/MPLUSRounded1c_700Bold.ttf',
           ],
         },
         android: {
@@ -103,6 +106,17 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
                 },
                 {
                   path: 'node_modules/@expo-google-fonts/inter/700Bold/Inter_700Bold.ttf',
+                  weight: 700,
+                },
+              ],
+            },
+            {
+              // Named after the font's iOS PostScript name so one fontFamily
+              // works on both platforms.
+              fontFamily: 'RoundedMplus1c-Bold',
+              fontDefinitions: [
+                {
+                  path: 'node_modules/@expo-google-fonts/m-plus-rounded-1c/700Bold/MPLUSRounded1c_700Bold.ttf',
                   weight: 700,
                 },
               ],

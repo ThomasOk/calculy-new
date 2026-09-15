@@ -9,12 +9,13 @@ jest.mock('react-native-worklets', () => ({
 
 // Mock react-native-reanimated
 jest.mock('react-native-reanimated', () => {
-  const View = require('react-native').View;
+  const { Text, View } = require('react-native');
 
   return {
     __esModule: true,
     default: {
       View,
+      Text,
       ScrollView: View,
       createAnimatedComponent: (component: any) => component,
     },
@@ -27,6 +28,8 @@ jest.mock('react-native-reanimated', () => {
     withRepeat: jest.fn(value => value),
     withSequence: jest.fn((...values) => values[0]),
     cancelAnimation: jest.fn(),
+    useReducedMotion: jest.fn(() => false),
+    cubicBezier: jest.fn(() => ({})),
     Easing: {
       linear: jest.fn(),
       ease: jest.fn(),

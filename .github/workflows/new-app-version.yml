@@ -62,4 +62,4 @@ jobs:
 
       - name: 🏃‍♂️ Run App release
         run: |
-          pnpm app-release ${{ github.event.inputs.release-type }}
+          pnpm --filter @calculy/mobile run app-release ${{ github.event.inputs.release-type }}

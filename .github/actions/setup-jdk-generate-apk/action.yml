@@ -36,11 +36,11 @@ runs:
 
     - name: Generate Test APK
       run: |
-        pnpm prebuild:${{ inputs.APP_ENV }}
-        cd  android
+        pnpm --filter @calculy/mobile run prebuild:${{ inputs.APP_ENV }}
+        cd  apps/mobile/android
         chmod +x ./gradlew
         ./gradlew assembleRelease --no-daemon
-        cd ..
+        cd ../../..
       shell: bash
       env:
         EXPO_NO_DOTENV: '1'

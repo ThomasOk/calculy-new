@@ -14,6 +14,13 @@ const envSchema = z.object({
   EXPO_PUBLIC_ASSOCIATED_DOMAIN: z.string().url().optional(),
   EXPO_PUBLIC_VAR_NUMBER: z.number(),
   EXPO_PUBLIC_VAR_BOOL: z.boolean(),
+  EXPO_PUBLIC_SUPABASE_URL: z.string().url(),
+  // The anon/public key is meant to ship in the client bundle — it's the
+  // service_role key and the DB password that must never get an EXPO_PUBLIC_ var.
+  EXPO_PUBLIC_SUPABASE_ANON_KEY: z.string(),
+  EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: z.string(),
+  EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: z.string(),
+  EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID: z.string(),
 
   // only available for app.config.ts usage
   APP_BUILD_ONLY_VAR: z.string().optional(),
@@ -24,15 +31,15 @@ const EXPO_PUBLIC_APP_ENV = (process.env.EXPO_PUBLIC_APP_ENV
   ?? 'development') as z.infer<typeof envSchema>['EXPO_PUBLIC_APP_ENV'];
 
 const BUNDLE_IDS = {
-  development: 'com.calculy.development',
-  preview: 'com.calculy.preview',
-  production: 'com.calculy',
+  development: 'gg.calculy.app',
+  preview: 'gg.calculy.app',
+  production: 'gg.calculy.app',
 } as const;
 
 const PACKAGES = {
-  development: 'com.calculy.development',
-  preview: 'com.calculy.preview',
-  production: 'com.calculy',
+  development: 'gg.calculy.app',
+  preview: 'gg.calculy.app',
+  production: 'gg.calculy.app',
 } as const;
 
 const SCHEMES = {
@@ -41,7 +48,7 @@ const SCHEMES = {
   production: 'calculy',
 } as const;
 
-const NAME = 'calculy';
+const NAME = 'Calculy';
 
 // Check if strict validation is required (before prebuild)
 const STRICT_ENV_VALIDATION = process.env.STRICT_ENV_VALIDATION === '1';
@@ -58,6 +65,11 @@ const _env: z.infer<typeof envSchema> = {
   EXPO_PUBLIC_ASSOCIATED_DOMAIN: process.env.EXPO_PUBLIC_ASSOCIATED_DOMAIN,
   EXPO_PUBLIC_VAR_NUMBER: Number(process.env.EXPO_PUBLIC_VAR_NUMBER ?? 0),
   EXPO_PUBLIC_VAR_BOOL: process.env.EXPO_PUBLIC_VAR_BOOL === 'true',
+  EXPO_PUBLIC_SUPABASE_URL: process.env.EXPO_PUBLIC_SUPABASE_URL ?? '',
+  EXPO_PUBLIC_SUPABASE_ANON_KEY: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '',
+  EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? '',
+  EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? '',
+  EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ?? '',
   APP_BUILD_ONLY_VAR: process.env.APP_BUILD_ONLY_VAR,
 };
 

@@ -33,18 +33,18 @@ jobs:
         uses: ./.github/actions/setup-node-pnpm-install
 
       - name: 🏃‍♂️ Run Tests
-        run: pnpm run test:ci
+        run: pnpm --filter @calculy/mobile run test:ci
 
       - name: Jest Coverage Comment
         uses: MishaKav/jest-coverage-comment@main
         if: (success() || failure()) && github.event_name == 'pull_request'
         with:
-          coverage-summary-path: ./coverage/coverage-summary.json
+          coverage-summary-path: ./apps/mobile/coverage/coverage-summary.json
           summary-title: 💯 Test Coverage
           badge-title: Coverage
           create-new-comment: false
           junitxml-title: 😎 Tests Results
-          junitxml-path: ./coverage/jest-junit.xml
+          junitxml-path: ./apps/mobile/coverage/jest-junit.xml
           coverage-title: 👀 Tests Details
-          coverage-path: ./coverage/coverage.txt
+          coverage-path: ./apps/mobile/coverage/coverage.txt
           report-only-changed-files: true

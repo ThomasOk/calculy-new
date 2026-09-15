@@ -54,8 +54,12 @@
   ],
 
   "typescript.tsdk": "node_modules/typescript/lib",
+  "eslint.workingDirectories": [
+    { "pattern": "apps/*" },
+    { "pattern": "packages/*" }
+  ],
   "cSpell.words": ["Flashlist", "Lato"],
-  "i18n-ally.localesPaths": ["src/translations/"],
+  "i18n-ally.localesPaths": ["apps/mobile/src/translations/"],
   "i18n-ally.keystyle": "nested",
   "i18n-ally.disabled": false, // make sure to disable i18n-ally in your global setting and only enable it for such projects
   "tailwindCSS.experimental.classRegex": [

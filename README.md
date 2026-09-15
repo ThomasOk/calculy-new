@@ -1,49 +1,48 @@
 <h1 align="center">
-  <img alt="logo" src="./assets/icon.png" width="124px" style="border-radius:10px"/><br/>
-Mobile App </h1>
+  <img alt="logo" src="./apps/mobile/assets/icon.png" width="124px" style="border-radius:10px"/><br/>
+Calculy </h1>
 
-> This Project is based on [Obytes starter](https://starter.obytes.com)
+## Structure
 
-## Requirements
+```text
+apps/
+  mobile/        Expo / React Native app
+packages/
+  domain/        Pure, shareable business rules
+  supabase/      Typed Supabase client + generated database types
+supabase/
+  migrations/    Versioned SQL migrations
+```
 
-- [React Native dev environment ](https://reactnative.dev/docs/environment-setup)
-- [Node.js LTS release](https://nodejs.org/en/)
-- [Git](https://git-scm.com/)
-- [Watchman](https://facebook.github.io/watchman/docs/install#buildinstall), required only for macOS or Linux users
-- [Pnpm](https://pnpm.io/installation)
-- [Cursor](https://www.cursor.com/) or [VS Code Editor](https://code.visualstudio.com/download) ⚠️ Make sure to install all recommended extension from `.vscode/extensions.json`
+## Getting started
 
-## 👋 Quick start
+Prerequisites: Node.js, pnpm, and the native tooling required by Expo (see [React Native environment setup](https://reactnative.dev/docs/environment-setup)).
 
-Clone the repo to your machine and install deps :
-
-```sh
-git clone https://github.com/user/repo-name
-
-cd ./repo-name
-
+```bash
 pnpm install
+cp apps/mobile/.env.example apps/mobile/.env
+pnpm dev
 ```
 
-To run the app on ios
+To run a development build:
 
-```sh
+```bash
 pnpm ios
-```
-
-To run the app on Android
-
-```sh
 pnpm android
 ```
 
-## ✍️ Documentation
+App-specific Expo and EAS commands (`prebuild`, `build:*`, `start:preview`, ...) must be run from `apps/mobile`.
 
-- [Rules and Conventions](https://starter.obytes.com/getting-started/rules-and-conventions/)
-- [Project structure](https://starter.obytes.com/getting-started/project-structure)
-- [Environment vars and config](https://starter.obytes.com/getting-started/environment-vars-config)
-- [UI and Theming](https://starter.obytes.com/ui-and-theme/ui-theming)
-- [Components](https://starter.obytes.com/ui-and-theme/components)
-- [Forms](https://starter.obytes.com/ui-and-theme/Forms)
-- [Data fetching](https://starter.obytes.com/guides/data-fetching)
-- [Contribute to starter](https://starter.obytes.com/how-to-contribute/)
+## Checks
+
+```bash
+pnpm check
+```
+
+## Supabase
+
+Migration files live in `supabase/migrations`. Once the Supabase project is linked (`supabase link`), regenerate the types in `packages/supabase/src/database.types.ts` with `supabase gen types typescript --linked`.
+
+## Documentation
+
+See `apps/mobile/README-project.md` for the mobile app's own documentation (rules and conventions, project structure, environment vars, UI/theming, forms, data fetching).

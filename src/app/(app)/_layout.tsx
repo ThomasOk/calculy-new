@@ -4,6 +4,7 @@ import * as React from 'react';
 import { Pressable, Text } from '@/components/ui';
 import {
   Feed as FeedIcon,
+  Home as HomeIcon,
   Settings as SettingsIcon,
   Style as StyleIcon,
 } from '@/components/ui/icons';
@@ -27,6 +28,15 @@ export default function TabLayout() {
     <Tabs>
       <Tabs.Screen
         name="index"
+        options={{
+          title: 'Home',
+          headerShown: false,
+          tabBarIcon: ({ color }) => <HomeIcon color={color} />,
+          tabBarButtonTestID: 'home-tab',
+        }}
+      />
+      <Tabs.Screen
+        name="feed"
         options={{
           title: 'Feed',
           tabBarIcon: ({ color }) => <FeedIcon color={color} />,

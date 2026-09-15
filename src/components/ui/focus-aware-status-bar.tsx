@@ -4,8 +4,12 @@ import { Platform } from 'react-native';
 import { SystemBars } from 'react-native-edge-to-edge';
 import { useUniwind } from 'uniwind';
 
-type Props = { hidden?: boolean };
-export function FocusAwareStatusBar({ hidden = false }: Props) {
+type Props = {
+  hidden?: boolean;
+  // Pins the icons for a screen that keeps one background in both themes.
+  style?: 'light' | 'dark';
+};
+export function FocusAwareStatusBar({ hidden = false, style }: Props) {
   const isFocused = useIsFocused();
   const { theme } = useUniwind();
 
@@ -15,7 +19,7 @@ export function FocusAwareStatusBar({ hidden = false }: Props) {
   return isFocused
     ? (
         <SystemBars
-          style={theme === 'light' ? 'dark' : 'light'}
+          style={style ?? (theme === 'light' ? 'dark' : 'light')}
           hidden={hidden}
         />
       )

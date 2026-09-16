@@ -200,7 +200,7 @@ function fitArt(art: Art, size: { width: number; height: number }) {
 }
 
 // The worklets below must stay in this order: a worklet captures the
-// functions it calls when its definition runs (see problem-roll.tsx).
+// functions it calls when its definition runs (see problem-pagaille.tsx).
 
 type PaintLook = { brush: number; flash: number; skin: Skin; t: Tilt; reducedMotion: boolean };
 

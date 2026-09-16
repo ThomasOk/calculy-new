@@ -1,7 +1,6 @@
 import type { SkCanvas } from '@shopify/react-native-skia';
 import type { WithSpringConfig } from 'react-native-reanimated';
-import type { NumberFeedback } from '@/features/challenge/prototype-not-boring/extruded-number';
-import { ClipOp, PaintStyle, Skia, StrokeCap, TileMode } from '@shopify/react-native-skia';
+import { PaintStyle, Skia, StrokeCap } from '@shopify/react-native-skia';
 import * as React from 'react';
 import {
   Easing,
@@ -15,37 +14,21 @@ import {
 
 // PROTOTYPE — Not Boring direction. Throwaway: see challenge-screen.tsx.
 //
-// The game feel shared by the column of calculations (problem-reel.tsx) and
-// the column over the giant answer (problem-stack.tsx), after
+// The game feel behind Pagaille's calculations (problem-pagaille.tsx) and
+// score (pagaille-score.tsx), after
 // notbor.ing/words/the-most-satisfying-checkbox: every action gets several
 // responses at once, in the same frame as its sound and haptic.
 // - A digit is stamped: it comes down onto the page from above, bigger, and
 //   lands with a thump that presses it into the page (usePress).
-// - An answer is a hit (useHit). It shows its green or red at once, and that
-//   color sweeps across the window (drawSweep). A correct answer flashes
-//   white, pops and throws sparks (drawSparks); a wrong one sinks and shakes.
-// - The column holds still for a few frames (hitstop), then scrolls one
-//   place (useScroll): a springy notch for a correct answer, a dead stop for
-//   a wrong one. The run starts with the calculations scrolling into place.
+// - An answer is a hit (useHit): it shows its green or red at once, a
+//   correct one flashing white, popping and throwing sparks (drawSparks); a
+//   wrong one sinks and shakes.
+// - The stack holds still for a few frames (hitstop), then turns one notch
+//   (useScroll): a springy notch for a correct answer, a dead stop for a
+//   wrong one. The run starts with the stack scrolling into place.
 // Reduced motion keeps the colors and the flash, and drops the rest.
 
 export const EASE_OUT = Easing.bezier(0.23, 1, 0.32, 1);
-
-// The window marking the current calculation's place: its corners, in
-// points, and its opacity.
-const WINDOW_RADIUS = 18;
-const WINDOW_ALPHA = 0.05;
-// On an answer, its green or red crosses the window, behind the calculation:
-// a band SWEEP_BAND of the window's width, soft at both ends, from beyond
-// the left edge to beyond the right one. It starts fast, on the answer's
-// frame, and slows as it leaves. The window takes a faint tint of the color
-// at once, fading as the band goes.
-const SWEEP_MS = 320;
-const SWEEP_BAND = 0.6;
-const SWEEP_ALPHA = 0.5;
-const SWEEP_TINT = 0.14;
-// Reduced motion: no band, the window's tint alone, stronger.
-const SWEEP_STILL_TINT = 0.3;
 
 // A digit comes down onto the page at an even speed (an impact, not a
 // settle), visible from its first frames: its glyph slots take STAMP_ENTER.
@@ -88,69 +71,15 @@ const SPIN: WithSpringConfig = { duration: 400, dampingRatio: 0.75 };
 
 // The answer's hit, as its worklets read it.
 export type Hit = { pop: number; flash: number; sparks: number };
-// The window's size, in points.
-export type Frame = { width: number; height: number };
 // Around an answer, in its canvas's units: its center, half its width and
 // height, and its digit height.
 export type SparkBox = { cx: number; cy: number; rx: number; ry: number; digitHeight: number };
+// A confirmed answer: a new id flashes the calculation green or red; red
+// also shakes.
+export type NumberFeedback = { id: number; correct: boolean };
 
 // The worklets below must stay in this order: a worklet captures the
-// functions it calls when its definition runs (see problem-roll.tsx).
-
-// The window's rounded rectangle, centered on the canvas's origin.
-function windowShape({ width, height }: Frame) {
-  'worklet';
-  return Skia.RRectXY(Skia.XYWHRect(-width / 2, -height / 2, width, height), WINDOW_RADIUS, WINDOW_RADIUS);
-}
-
-// Where the current calculation stands, whatever scrolls: the eye knows
-// where to look. Centered on the canvas's origin.
-export function drawWindow(canvas: SkCanvas, frame: Frame & { color: string }) {
-  'worklet';
-  const paint = Skia.Paint();
-  paint.setAntiAlias(true);
-  paint.setColor(Skia.Color(frame.color));
-  paint.setAlphaf(WINDOW_ALPHA);
-  canvas.drawRRect(windowShape(frame), paint);
-}
-
-// An answer's green or red crossing the window. progress runs from 0, the
-// band's head at the left edge, to 1, the whole band past the right one.
-export function drawSweep(canvas: SkCanvas, sweep: Frame & { progress: number; color: string; reducedMotion: boolean }) {
-  'worklet';
-  const { width, height, progress } = sweep;
-  if (progress >= 0.999)
-    return;
-  const shape = windowShape(sweep);
-  const solid = Skia.Color(sweep.color);
-  canvas.save();
-  canvas.clipRRect(shape, ClipOp.Intersect, true);
-
-  const tint = Skia.Paint();
-  tint.setAntiAlias(true);
-  tint.setColor(solid);
-  tint.setAlphaf((sweep.reducedMotion ? SWEEP_STILL_TINT : SWEEP_TINT) * (1 - progress));
-  canvas.drawRRect(shape, tint);
-
-  if (!sweep.reducedMotion) {
-    const clear = solid.slice();
-    clear[3] = 0;
-    const band = width * SWEEP_BAND;
-    const head = -width / 2 + (width + band) * progress;
-    const paint = Skia.Paint();
-    // Faint far behind, brightest just behind the head, soft at the head.
-    paint.setShader(Skia.Shader.MakeLinearGradient(
-      { x: head - band, y: 0 },
-      { x: head, y: 0 },
-      [clear, solid, clear],
-      [0, 0.8, 1],
-      TileMode.Decal,
-    ));
-    paint.setAlphaf(SWEEP_ALPHA);
-    canvas.drawRect(Skia.XYWHRect(-width / 2, -height / 2, width, height), paint);
-  }
-  canvas.restore();
-}
+// functions it calls when its definition runs (see problem-pagaille.tsx).
 
 // The answer's scale from its hit: up for a correct one, down for a wrong one.
 export function popScale(hit: Hit | null, { correct, reducedMotion }: { correct: boolean; reducedMotion: boolean }) {
@@ -256,17 +185,9 @@ export function useHit(feedback: NumberFeedback | null) {
   const pop = useSharedValue(0);
   const flash = useSharedValue(0);
   const sparks = useSharedValue(1);
-  const sweep = useSharedValue(1);
-  const correct = useSharedValue(true);
   React.useEffect(() => {
     if (!feedback)
       return;
-    // On the answer's frame, not after the hitstop: it's the verdict.
-    correct.set(feedback.correct);
-    sweep.set(withSequence(
-      withTiming(0, { duration: 0 }),
-      withTiming(1, { duration: SWEEP_MS, easing: EASE_OUT }),
-    ));
     const hold = (settle: typeof POP_BACK) =>
       withSequence(withTiming(1, { duration: 0 }), withDelay(HITSTOP_MS, withTiming(0, settle)));
     // Reduced motion keeps the flash: it's light, not movement.
@@ -280,6 +201,6 @@ export function useHit(feedback: NumberFeedback | null) {
         withTiming(1, { duration: SPARK_MS, easing: EASE_OUT }),
       ));
     }
-  }, [feedback, reducedMotion, pop, flash, sparks, sweep, correct]);
-  return { pop, flash, sparks, sweep, correct };
+  }, [feedback, reducedMotion, pop, flash, sparks]);
+  return { pop, flash, sparks };
 }

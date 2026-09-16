@@ -1,7 +1,6 @@
 import type { CSSAnimationProperties, CSSTransitionProperties } from 'react-native-reanimated';
-import type { Problem } from '@/features/challenge/problems';
-import type { NumberFeedback } from '@/features/challenge/prototype-not-boring/extruded-number';
-import type { Skin, SkinName } from '@/features/challenge/prototype-not-boring/skins';
+import type { NumberFeedback } from '@/features/challenge/prototype-not-boring/answer-hit';
+import type { Skin } from '@/features/challenge/prototype-not-boring/skins';
 import type { NumberBox } from '@/features/challenge/prototype-not-boring/streak-rays';
 import type { ChallengeState } from '@/features/challenge/use-challenge';
 import * as React from 'react';
@@ -19,20 +18,11 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { FocusAwareStatusBar, Text, View } from '@/components/ui';
 import { formatElapsed } from '@/features/challenge/format-elapsed';
 import { answerHaptic, countdownGoHaptic, countdownTickHaptic, keyTapHaptic } from '@/features/challenge/haptics';
-import { formatProblem } from '@/features/challenge/problems';
-import { ExtrudedNumber } from '@/features/challenge/prototype-not-boring/extruded-number';
 import { PagailleCountdown } from '@/features/challenge/prototype-not-boring/pagaille-countdown';
 import { PagailleProgress } from '@/features/challenge/prototype-not-boring/pagaille-progress';
 import { PagailleResults } from '@/features/challenge/prototype-not-boring/pagaille-results';
 import { usePagailleFonts } from '@/features/challenge/prototype-not-boring/pagaille-style';
-import { ProblemBand } from '@/features/challenge/prototype-not-boring/problem-band';
-import { ProblemCards } from '@/features/challenge/prototype-not-boring/problem-cards';
 import { ProblemPagaille } from '@/features/challenge/prototype-not-boring/problem-pagaille';
-import { ProblemQueue } from '@/features/challenge/prototype-not-boring/problem-queue';
-import { ProblemReel } from '@/features/challenge/prototype-not-boring/problem-reel';
-import { ProblemRoll } from '@/features/challenge/prototype-not-boring/problem-roll';
-import { ProblemSpotlight } from '@/features/challenge/prototype-not-boring/problem-spotlight';
-import { ProblemStack } from '@/features/challenge/prototype-not-boring/problem-stack';
 import { SKINS } from '@/features/challenge/prototype-not-boring/skins';
 import { StreakGlow } from '@/features/challenge/prototype-not-boring/streak-glow';
 import { StreakRays } from '@/features/challenge/prototype-not-boring/streak-rays';
@@ -53,26 +43,18 @@ import menuStartSound from '@/features/home/sounds/menu-start.wav';
 import { translate } from '@/lib/i18n';
 
 // PROTOTYPE — Not Boring direction. Throwaway: see challenge-screen.tsx.
-// Same game as ChallengeBoard (useChallenge, sounds, haptics); only the
-// rendering differs: a dark calculator with, depending on `layout`, one giant
-// extruded number (`number`), the previous, current and next calculations as
-// a roll with the current one in relief (`roll`), or those three as a band
-// above the giant answer (`band`). `pile`, `line` and `arc` keep `number`'s
-// giant answer and show the next calculations above it (problem-queue.tsx).
-// `cards` puts the three calculations on cards, as the Aqua board does
-// (problem-cards.tsx). `reel` is `roll` tidied up, with game feel
-// (problem-reel.tsx); `stack` is `reel` with `arc`'s giant answer on a card
-// in the column (problem-stack.tsx). `spotlight` is `line` with the current
-// calculation in relief, the others flat (problem-spotlight.tsx). `pagaille`
-// stacks the calculations in a mess, as a Persona menu, the current one on a
-// splash of paint (problem-pagaille.tsx). All show the countdown and the
-// score in the giant number, but `pagaille`, which has its own, in Persona's
-// style too (pagaille-countdown.tsx, pagaille-results.tsx). In a streak
-// (streak.ts), each milestone draws speed lines at the giant number and
-// flashes the glow behind it, which steps up until the next mistake
-// (streak-rays.tsx, streak-glow.tsx) — the answer sound itself doesn't change.
-
-export type StageLayout = 'number' | 'roll' | 'reel' | 'stack' | 'band' | 'pile' | 'line' | 'arc' | 'spotlight' | 'cards' | 'pagaille';
+// Same game as the old Aqua board (useChallenge, sounds, haptics); only the
+// rendering differs: a dark calculator, the calculations stacked in a mess
+// down the stage as a Persona menu, the current one on a splash of paint,
+// its answer typed in place (problem-pagaille.tsx). The countdown and the
+// results are in Persona's style too (pagaille-countdown.tsx,
+// pagaille-results.tsx). In a streak (streak.ts), each milestone draws speed
+// lines at the calculations and flashes the glow behind them, which steps up
+// until the next mistake (streak-rays.tsx, streak-glow.tsx) — the answer
+// sound itself doesn't change.
+// This was one of several looks tried side by side (see the previous shape
+// of challenge-screen.tsx in git history for the others); this is the one
+// the app ships.
 
 const FONT = { fontFamily: 'LeagueGothic_400Regular' } as const;
 const EASE_OUT = 'cubic-bezier(0.23, 1, 0.32, 1)';
@@ -84,7 +66,6 @@ const APPEAR = {
   animationDuration: '300ms',
   animationTimingFunction: cubicBezier(0.23, 1, 0.32, 1) as unknown as 'ease-out',
 } satisfies CSSAnimationProperties;
-const KEY_TRANSITION = { transition: `transform 120ms ${EASE_OUT}` } satisfies CSSTransitionProperties;
 // A key shows pressed at once, as the finger lands, and lets go over this.
 const KEY_RELEASE = { duration: 150, easing: Easing.bezier(0.23, 1, 0.32, 1) };
 const KEY_PRESSED_SCALE = 0.97;
@@ -100,8 +81,6 @@ const RESTART_SOUND = [menuStartSound];
 const BACK_SOUND = [menuCancelOne, menuCancelTwo];
 
 type Props = {
-  skinName: SkinName;
-  layout: StageLayout;
   problemCount: number;
   streakMilestones: readonly number[];
   onQuit: () => void;
@@ -109,8 +88,8 @@ type Props = {
   insets: { top: number; bottom: number };
 };
 
-export function NotBoringChallenge({ skinName, layout, problemCount, streakMilestones, onQuit, ready, insets }: Props) {
-  const skin = SKINS[skinName];
+export function NotBoringChallenge({ problemCount, streakMilestones, onQuit, ready, insets }: Props) {
+  const skin = SKINS.white;
   // Abril Fatface for Pagaille's results, which also draw it as text.
   const fontsLoaded = usePagailleFonts();
   const reducedMotion = useReducedMotion();
@@ -127,7 +106,7 @@ export function NotBoringChallenge({ skinName, layout, problemCount, streakMiles
     [playAnswerSound, trackStreak],
   );
   const numberBox = useNumberBox();
-  const { state, isStarted, isFinished, canConfirm, score, start, pressDigit, erase, confirm, restart }
+  const { state, isStarted, isFinished, canConfirm, start, pressDigit, erase, confirm, restart }
     = useChallenge({ problemCount, onAnswer });
   const onErase = useSoundedErase(erase);
   const showResults = useShowResults(isFinished, state.runId);
@@ -151,12 +130,6 @@ export function NotBoringChallenge({ skinName, layout, problemCount, streakMiles
   if (!fontsLoaded)
     return <View style={[styles.fill, { backgroundColor: skin.background }]} />;
 
-  const number = !isStarted
-    ? String(countdown || '')
-    : showResults
-      ? String(score)
-      : state.input !== '' ? state.input : flash?.value ?? '';
-
   return (
     <NativeView
       ref={numberBox.rootRef}
@@ -174,18 +147,15 @@ export function NotBoringChallenge({ skinName, layout, problemCount, streakMiles
         showResults={showResults}
         state={state}
         playing={isStarted && !isFinished}
-        bar={layout === 'pagaille'}
       />
 
       <Stage
-        layout={layout}
         skin={skin}
         tilt={tilt}
         pan={pan}
         state={state}
         isStarted={isStarted}
         showResults={showResults}
-        number={number}
         countdown={countdown}
         flash={flash}
         numberRef={numberBox.numberRef}
@@ -194,25 +164,23 @@ export function NotBoringChallenge({ skinName, layout, problemCount, streakMiles
         onQuit={onResultsQuit}
       />
 
-      {/* Pagaille's results bring their own buttons. */}
-      {showResults
-        ? layout !== 'pagaille' && <ResultsActions skin={skin} onRestart={restartRun} onQuit={onResultsQuit} reducedMotion={reducedMotion} />
-        : (
-            <Animated.View
-              style={[FADE, { opacity: isPlaying ? 1 : 0.25 }]}
-              pointerEvents={isPlaying ? 'auto' : 'none'}
-            >
-              <FlatKeypad
-                skin={skin}
-                onDigit={pressDigit}
-                onErase={onErase}
-                onConfirm={onConfirm}
-                canConfirm={canConfirm}
-                disabled={isFinished}
-                reducedMotion={reducedMotion}
-              />
-            </Animated.View>
-          )}
+      {/* The results bring their own buttons (PagailleResults). */}
+      {!showResults && (
+        <Animated.View
+          style={[FADE, { opacity: isPlaying ? 1 : 0.25 }]}
+          pointerEvents={isPlaying ? 'auto' : 'none'}
+        >
+          <FlatKeypad
+            skin={skin}
+            onDigit={pressDigit}
+            onErase={onErase}
+            onConfirm={onConfirm}
+            canConfirm={canConfirm}
+            disabled={isFinished}
+            reducedMotion={reducedMotion}
+          />
+        </Animated.View>
+      )}
 
       {/* Last, over everything, keypad included. */}
       <StreakRays burst={streak.rays} box={numberBox.box} color={skin.ink} />
@@ -269,34 +237,27 @@ function useResultsSounds(restart: () => void, quit: () => void) {
 }
 
 type StageProps = {
-  layout: StageLayout;
   skin: Skin;
   tilt: ReturnType<typeof useTilt>['tilt'];
   pan: ReturnType<typeof useTilt>['pan'];
   state: ChallengeState;
   isStarted: boolean;
   showResults: boolean;
-  // What the giant number shows: the countdown, the answer or the score.
-  number: string;
   // 3, 2, 1, then 0: see useCountdown.
   countdown: number;
   flash: Flash | null;
-  // The giant number's box, measured for the streak's speed lines.
+  // The calculations' box, measured for the streak's speed lines.
   numberRef: React.RefObject<NativeView | null>;
   onNumberLayout: () => void;
-  // Pagaille's results' buttons.
+  // The results' buttons.
   onRestart: () => void;
   onQuit: () => void;
 };
 
-// Everything between the header and the keypad; for Pagaille's results,
-// the keypad's place too.
-function Stage({ layout, skin, tilt, pan, state, isStarted, showResults, number, countdown, flash, numberRef, onNumberLayout, onRestart, onQuit }: StageProps) {
-  // The roll and the band replace the giant number while the run is played.
-  const inPlay = (layout === 'roll' || layout === 'reel' || layout === 'stack' || layout === 'band' || layout === 'cards' || layout === 'pagaille')
-    && isStarted && !showResults;
-  const previousIndex = state.answers.length - 1;
-  if (layout === 'pagaille' && showResults) {
+// Everything between the header and the keypad; once the run is over, the
+// keypad's place too, for the results' own buttons.
+function Stage({ skin, tilt, pan, state, isStarted, showResults, countdown, flash, numberRef, onNumberLayout, onRestart, onQuit }: StageProps) {
+  if (showResults) {
     return (
       <PagailleResults
         problems={state.problems}
@@ -311,118 +272,29 @@ function Stage({ layout, skin, tilt, pan, state, isStarted, showResults, number,
   }
   return (
     <View style={styles.fill}>
-      {/* Hidden until the countdown ends, as B's lines below. */}
-      {(layout === 'pile' || layout === 'line' || layout === 'arc' || layout === 'spotlight') && !showResults && (
-        <Animated.View style={[FADE, { opacity: isStarted ? 1 : 0 }]}>
-          {layout === 'spotlight'
-            ? (
-                <ProblemSpotlight
-                  problems={state.problems}
-                  answers={state.answers}
-                  currentIndex={state.currentIndex}
-                  skin={skin}
-                  tilt={tilt}
-                />
-              )
-            : (
-                <ProblemQueue
-                  mode={layout}
-                  problems={state.problems}
-                  answers={state.answers}
-                  currentIndex={state.currentIndex}
-                  skin={skin}
-                  tilt={tilt}
-                />
-              )}
-        </Animated.View>
-      )}
-
-      {/* The roll and the band show the calculations themselves. */}
-      {(layout === 'number' || showResults) && (
-        <Animated.View style={[styles.lines, FADE, { opacity: isStarted ? 1 : 0 }]}>
-          {showResults
-            ? (
-                <Text style={[FONT, styles.history, { color: skin.muted }]}>
-                  {translate('challenge.finished')}
-                </Text>
-              )
-            : (
-                <ProblemLines
-                  skin={skin}
-                  current={state.problems[state.currentIndex]}
-                  previous={state.problems[previousIndex]}
-                  previousAnswer={state.answers[previousIndex]}
-                />
-              )}
-        </Animated.View>
-      )}
-
       <GestureDetector gesture={pan}>
         <NativeView ref={numberRef} style={styles.fill} onLayout={onNumberLayout}>
-          <Animated.View key={inPlay ? layout : 'number'} style={[styles.fill, APPEAR]}>
-            {inPlay
-              ? <Calculations layout={layout} state={state} skin={skin} tilt={tilt} feedback={flash} />
-              : layout !== 'pagaille' && <ExtrudedNumber value={number} skin={skin} tilt={tilt} feedback={flash} />}
+          {/* Remounted as the countdown ends, so the fade-in plays once,
+              with the calculations rather than empty. */}
+          <Animated.View key={isStarted ? 'playing' : 'countdown'} style={[styles.fill, APPEAR]}>
+            {isStarted && (
+              <ProblemPagaille
+                problems={state.problems}
+                answers={state.answers}
+                currentIndex={state.currentIndex}
+                input={state.input}
+                skin={skin}
+                tilt={tilt}
+                feedback={flash}
+              />
+            )}
           </Animated.View>
         </NativeView>
       </GestureDetector>
 
       {/* Over the calculations, which spin in as it goes after the 1. A run
           of its own each, so a restart counts again. */}
-      {layout === 'pagaille' && <PagailleCountdown key={state.runId} count={countdown} skin={skin} />}
-
-      {showResults && (
-        <Text style={[FONT, styles.resultsLine, { color: skin.muted }]}>
-          {`/ ${state.problems.length}   ·   ${formatElapsed((state.finishedAt ?? 0) - (state.startedAt ?? 0))}`}
-        </Text>
-      )}
-    </View>
-  );
-}
-
-type CalculationsProps = {
-  layout: StageLayout;
-  state: ChallengeState;
-  skin: Skin;
-  tilt: ReturnType<typeof useTilt>['tilt'];
-  feedback: Flash | null;
-};
-
-// The previous, current and next calculations, as a roll, a band or cards.
-function Calculations({ layout, state, skin, tilt, feedback }: CalculationsProps) {
-  const components: Partial<Record<StageLayout, typeof ProblemRoll>> = {
-    band: ProblemBand,
-    cards: ProblemCards,
-    pagaille: ProblemPagaille,
-    reel: ProblemReel,
-    stack: ProblemStack,
-  };
-  const Component = components[layout] ?? ProblemRoll;
-  return (
-    <Component
-      problems={state.problems}
-      answers={state.answers}
-      currentIndex={state.currentIndex}
-      input={state.input}
-      skin={skin}
-      tilt={tilt}
-      feedback={feedback}
-    />
-  );
-}
-
-type ResultsActionsProps = {
-  skin: Skin;
-  onRestart: () => void;
-  onQuit: () => void;
-  reducedMotion: boolean;
-};
-
-function ResultsActions({ skin, onRestart, onQuit, reducedMotion }: ResultsActionsProps) {
-  return (
-    <View className="gap-2 px-6 pb-4">
-      <FlatButton label={translate('challenge.restart')} color={skin.accent} onPress={onRestart} reducedMotion={reducedMotion} />
-      <FlatButton label={translate('challenge.results.back')} color={skin.muted} onPress={onQuit} reducedMotion={reducedMotion} />
+      <PagailleCountdown key={state.runId} count={countdown} skin={skin} />
     </View>
   );
 }
@@ -434,29 +306,15 @@ type HeaderProps = {
   state: ChallengeState;
   // A calculation is being played: not during the countdown, nor once done.
   playing: boolean;
-  // Pagaille's progress bar under the header (pagaille-progress.tsx),
-  // instead of "7/20" at its right.
-  bar: boolean;
 };
 
-function Header({ skin, onQuit, showResults, state, playing, bar }: HeaderProps) {
-  const done = state.answers.length;
-  const total = state.problems.length;
+function Header({ skin, onQuit, showResults, state, playing }: HeaderProps) {
   return (
     <>
-      <HeaderRow
-        skin={skin}
-        onQuit={onQuit}
-        showResults={showResults}
-        startedAt={state.startedAt}
-        finishedAt={state.finishedAt}
-        position={bar ? null : `${Math.min(done + 1, total)}/${total}`}
-      />
-      {bar && (
-        <Animated.View style={[FADE, { opacity: showResults ? 0 : 1 }]}>
-          <PagailleProgress total={total} done={done} playing={playing} skin={skin} />
-        </Animated.View>
-      )}
+      <HeaderRow skin={skin} onQuit={onQuit} showResults={showResults} startedAt={state.startedAt} finishedAt={state.finishedAt} />
+      <Animated.View style={[FADE, { opacity: showResults ? 0 : 1 }]}>
+        <PagailleProgress total={state.problems.length} done={state.answers.length} playing={playing} skin={skin} />
+      </Animated.View>
     </>
   );
 }
@@ -467,11 +325,9 @@ type HeaderRowProps = {
   showResults: boolean;
   startedAt: number | null;
   finishedAt: number | null;
-  // "7/20", or null to leave the right side empty.
-  position: string | null;
 };
 
-function HeaderRow({ skin, onQuit, showResults, startedAt, finishedAt, position }: HeaderRowProps) {
+function HeaderRow({ skin, onQuit, showResults, startedAt, finishedAt }: HeaderRowProps) {
   return (
     <View className="flex-row items-center px-4">
       <View className="flex-1 items-start">
@@ -487,51 +343,9 @@ function HeaderRow({ skin, onQuit, showResults, startedAt, finishedAt, position 
       <Animated.View style={[FADE, { opacity: showResults ? 0 : 1 }]}>
         <Timer startedAt={startedAt} finishedAt={finishedAt} color={skin.muted} />
       </Animated.View>
-      <View className="flex-1 items-end">
-        {position !== null && <Text style={[FONT, styles.header, { color: skin.muted }]}>{position}</Text>}
-      </View>
+      {/* Balances the ✕ on the left, so the timer stays centered. */}
+      <View className="flex-1 items-end" />
     </View>
-  );
-}
-
-type ProblemLinesProps = {
-  skin: Skin;
-  current: Problem | undefined;
-  previous: Problem | undefined;
-  previousAnswer: number | undefined;
-};
-
-// The last answer, small and green or red, above the calculation to solve —
-// like a calculator's history line.
-function ProblemLines({ skin, current, previous, previousAnswer }: ProblemLinesProps) {
-  return (
-    <>
-      <Text style={[FONT, styles.history, { color: skin.muted }]}>
-        {previous && previousAnswer !== undefined
-          ? (
-              <>
-                {`${formatProblem(previous)} `}
-                <Text style={[FONT, { color: previousAnswer === previous.answer ? skin.correct : skin.wrong }]}>
-                  {previousAnswer}
-                </Text>
-              </>
-            )
-          : ' '}
-      </Text>
-      {current ? <Equation problem={current} skin={skin} /> : <Text style={[FONT, styles.equation]}> </Text>}
-    </>
-  );
-}
-
-function Equation({ problem, skin }: { problem: Problem; skin: Skin }) {
-  const [left, operator, right, equals] = formatProblem(problem).split(' ');
-  return (
-    <Text style={[FONT, styles.equation, { color: skin.ink }]} accessibilityLabel={formatProblem(problem)}>
-      {left}
-      <Text style={[FONT, { color: skin.accent }]}>{` ${operator} `}</Text>
-      {right}
-      <Text style={[FONT, { color: skin.muted }]}>{` ${equals}`}</Text>
-    </Text>
   );
 }
 
@@ -554,7 +368,10 @@ type KeypadProps = {
 
 function FlatKeypad({ skin, onDigit, onErase, onConfirm, canConfirm, disabled, reducedMotion }: KeypadProps) {
   return (
-    <View className="px-10 pb-2">
+    // Clear of the screen's bottom edge, on top of the safe area: thumbs
+    // rest under the keys rather than against the edge, and the bottom row
+    // doesn't sit on a gesture bar.
+    <View className="px-10 pb-6">
       {KEY_ROWS.map(row => (
         <View key={row.join()} className="flex-row">
           {row.map((key) => {
@@ -640,15 +457,24 @@ function useKeyGesture({ onPress, disabled, silent }: KeyGestureOptions) {
   const pressed = useSharedValue(0);
   // Fingers down on this key right now.
   const fingers = useSharedValue(0);
-  // The latest onPress, so the gesture is built once rather than on every render.
-  const onPressRef = React.useRef(onPress);
+  // The latest onPress and disabled, so the gesture is built once rather than
+  // on every render. A rebuilt gesture hands the native handler a new config
+  // mid-touch, and `disabled` turns over under a finger: the last `=` of a
+  // run ends it, so the keypad went disabled between that finger landing and
+  // lifting. The handler never saw it lift — the key stayed pressed, its
+  // finger count stuck above zero, and it was dead for the next run.
+  // Disabled is a look and a screen reader's state: the reducer already
+  // ignores every key once the run is over (use-challenge.ts).
+  const latest = React.useRef({ onPress, disabled });
   React.useLayoutEffect(() => {
-    onPressRef.current = onPress;
+    latest.current = { onPress, disabled };
   });
   const press = React.useCallback(() => {
+    if (latest.current.disabled)
+      return;
     if (!silent)
       keyTapHaptic();
-    onPressRef.current();
+    latest.current.onPress();
   }, [silent]);
 
   const gesture = React.useMemo(() => {
@@ -658,7 +484,6 @@ function useKeyGesture({ onPress, disabled, silent }: KeyGestureOptions) {
       return fingers.get() === 0;
     };
     return Gesture.Manual()
-      .enabled(!disabled)
       .onTouchesDown((event, manager) => {
         if (fingers.get() === 0) {
           manager.activate();
@@ -681,25 +506,9 @@ function useKeyGesture({ onPress, disabled, silent }: KeyGestureOptions) {
         fingers.set(0);
         pressed.set(withTiming(0, KEY_RELEASE));
       });
-  }, [disabled, press, pressed, fingers]);
+  }, [press, pressed, fingers]);
 
   return { gesture, pressed, press };
-}
-
-function FlatButton({ label, color, onPress, reducedMotion }: { label: string; color: string; onPress: () => void; reducedMotion: boolean }) {
-  const [pressed, setPressed] = React.useState(false);
-  return (
-    <Pressable
-      onPress={onPress}
-      onPressIn={() => setPressed(true)}
-      onPressOut={() => setPressed(false)}
-      accessibilityRole="button"
-    >
-      <Animated.View style={[styles.button, KEY_TRANSITION, pressed && !reducedMotion && styles.keyPressed]}>
-        <Text style={[FONT, styles.buttonLabel, { color }]}>{label.toUpperCase()}</Text>
-      </Animated.View>
-    </Pressable>
-  );
 }
 
 function Timer({ startedAt, finishedAt, color }: { startedAt: number | null; finishedAt: number | null; color: string }) {
@@ -788,32 +597,10 @@ const styles = StyleSheet.create({
   timer: {
     fontVariant: ['tabular-nums'],
   },
-  lines: {
-    alignItems: 'center',
-    paddingTop: 8,
-    paddingHorizontal: 24,
-  },
-  history: {
-    fontSize: 26,
-    lineHeight: 32,
-  },
-  equation: {
-    fontSize: 52,
-    lineHeight: 62,
-  },
-  resultsLine: {
-    textAlign: 'center',
-    fontSize: 30,
-    lineHeight: 38,
-    paddingBottom: 12,
-  },
   key: {
     height: 64,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  keyPressed: {
-    transform: [{ scale: 0.97 }],
   },
   keyDisabled: {
     opacity: 0.35,
@@ -828,16 +615,5 @@ const styles = StyleSheet.create({
   keyLabel: {
     fontSize: 44,
     lineHeight: 52,
-  },
-  button: {
-    minHeight: 56,
-    alignItems: 'center',
-    justifyContent: 'center',
-    transform: [{ scale: 1 }],
-  },
-  buttonLabel: {
-    fontSize: 30,
-    lineHeight: 38,
-    letterSpacing: 1,
   },
 });

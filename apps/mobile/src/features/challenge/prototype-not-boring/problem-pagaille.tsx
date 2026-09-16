@@ -2,8 +2,7 @@ import type { SkCanvas, SkColor, SkFont, SkPath } from '@shopify/react-native-sk
 import type { LayoutChangeEvent } from 'react-native';
 import type { SharedValue } from 'react-native-reanimated';
 import type { Problem } from '@/features/challenge/problems';
-import type { Hit } from '@/features/challenge/prototype-not-boring/answer-hit';
-import type { NumberFeedback } from '@/features/challenge/prototype-not-boring/extruded-number';
+import type { Hit, NumberFeedback } from '@/features/challenge/prototype-not-boring/answer-hit';
 import type { Box, InkItem } from '@/features/challenge/prototype-not-boring/pagaille-paint';
 import type { GlyphRun } from '@/features/challenge/prototype-not-boring/relief';
 import type { Skin } from '@/features/challenge/prototype-not-boring/skins';
@@ -388,7 +387,7 @@ type RowContext = {
 };
 
 // The worklets below must stay in this order: a worklet captures the
-// functions it calls when its definition runs (see problem-roll.tsx).
+// functions it calls when its definition runs (see problem-pagaille.tsx).
 
 type Place = { x: number; y: number; angle: number; size: number; alpha: number };
 

@@ -85,6 +85,28 @@ export function stampIn(delay: number) {
   } satisfies CSSAnimationProperties;
 }
 
+// The countdown's outgoing number (pagaille-countdown.tsx), pressed down
+// into the page as the next one lands over it. Reduced motion drops the
+// push and keeps the fade.
+const SINK_MS = 200;
+const SINK_TO = 0.84;
+export const SINK_OUT = {
+  animationName: {
+    from: { opacity: 1, transform: [{ scale: 1 }] },
+    to: { opacity: 0, transform: [{ scale: SINK_TO }] },
+  },
+  animationDuration: `${SINK_MS}ms`,
+  animationTimingFunction: EASE_OUT,
+  animationFillMode: 'forwards',
+} satisfies CSSAnimationProperties;
+
+export const SINK_OUT_STILL = {
+  animationName: { from: { opacity: 1 }, to: { opacity: 0 } },
+  animationDuration: `${SINK_MS}ms`,
+  animationTimingFunction: EASE_OUT,
+  animationFillMode: 'forwards',
+} satisfies CSSAnimationProperties;
+
 // From the right, like a menu's items; a negative `from`, from the left.
 export function slideIn(delay: number, from = SLIDE_FROM) {
   return {

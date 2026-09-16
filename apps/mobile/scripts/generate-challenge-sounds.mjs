@@ -224,9 +224,14 @@ const SOUNDS = {
 // ---------- The home menu ----------
 
 // The "Rythmique" direction of the menu's bench
-// (https://claude.ai/artifact/TQXbMPa4iu7PcHe7iNz4Sa), with the "Cuivres"
-// Start: drums for the gestures, and one chord, Start's B7 on the brass,
-// which the countdown's first note, an E, resolves.
+// (https://claude.ai/artifact/TQXbMPa4iu7PcHe7iNz4Sa), with Start tried on
+// "Cuivres" (2026-09-15), "Riff montant" (a Cuivres variant, from a second
+// bench: https://claude.ai/artifact/77a5vF9s7jaq4SdkY5Wphm), then Rhodes's
+// own Start — none of them fit. Now playing Rhodes's *Fenêtre* chord
+// instead: the arpeggio the sheet's count stamps down to, borrowed for
+// Start. Still resolves into the countdown's first note, an E.
+// The results screen reuses this file for Restart (not-boring-challenge.tsx,
+// RESTART_SOUND): both are "start a run", so both get the same cue.
 
 // A rubber stamp coming down: its knock, where a phone speaker still plays,
 // over a thud only headphones carry.
@@ -285,10 +290,11 @@ const MENU_SOUNDS = {
     ],
   ]))),
   'menu-sheet.wav': [...stamp(0, 0.6), ...snap(0.002, 0.35, { f: 2100, offset: 0.7 })],
+  // Rhodes's Fenêtre chord (Amaj7: A, C#, E, G#), rolled over 18 ms, with the
+  // stamp under it — the sheet's own arpeggio, borrowed for Start.
   'menu-start.wav': [
-    ...brass(0, ['B5', 'D#6', 'A6'], { g: 0.3, d: 0.28, open: 5000, close: 1300, time: 0.2 }),
-    ...crash(0, 0.12, 0.5),
-    ...snap(0, 0.5),
+    ...['A5', 'C#6', 'E6', 'G#6'].flatMap((note, k) => rhodes(k * 0.006, hz(note), { g: 0.15, decay: 0.55, index: 1.1 })),
+    ...stamp(0, 0.22),
   ],
   // The brush back down: the bolt's, reversed.
   ...Object.fromEntries([0, 1].map(i => [

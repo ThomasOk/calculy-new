@@ -394,3 +394,130 @@ aucun test ne couvre le haptique, ni avant ni après cette session).
 
 - `touch-and-accessibility` : pour juger au doigt tout ce qui précède (§10.4) — encore plus vrai pour du
   haptique, qui ne se juge qu'en main, comme au §6/§9.5 pour le reste du menu.
+
+## 11. Remplacement du son de Start du menu (nouvelle session, même jour)
+
+Le son « Cuivres » de Start (§9.1/§9.2), retenu le même jour, ne convenait plus à l'utilisateur à l'oreille une
+fois en place. **Toujours rien de commité.**
+
+### 11.1 Démarche : un second banc, sur Start seul
+
+Même principe qu'au §9.1, mais ciblé sur un seul moment (le reste du menu — Entrée/Carte/Fenêtre/Annuler,
+direction « Rythmique » — n'était pas remis en cause) : un artifact HTML jouable, mêmes instruments Web Audio
+que le générateur (Rhodes, cuivres, snap, charley, cymbale), même idée harmonique (Start appelle le mi du « 3 »
+du décompte). **Lien** : [Le Start à l'oreille](https://claude.ai/artifact/77a5vF9s7jaq4SdkY5Wphm).
+
+- **5 propositions** : l'original Cuivres (gardé pour comparer, marqué comme ne convenant plus), Stab net
+  (accord resserré, filtre qui se referme vite), Riff montant (trois notes de Rhodes montantes avant l'accord),
+  Cymbale + Cuivres (la cymbale s'ouvre avant que l'accord atterrisse), Swoosh + Stab (souffle filtré puis
+  accord bref).
+  Un téléphone jouable dans la page (carte → fenêtre → Start) enchaîne sur le vrai décompte pour juger le
+  raccord harmonique en situation, comme au §9.1.
+- **Choix retenu par l'utilisateur** : **Riff montant** (option C).
+
+### 11.2 Ce qui a été implémenté
+
+- **`scripts/generate-challenge-sounds.mjs`**, section « The home menu » : `menu-start.wav` remplacé par la
+  recette du Riff montant — trois notes de Rhodes (sol#5, si5, ré#6, chacune plus forte et un peu plus longue
+  que la précédente) puis l'accord de si (si5, ré#6, fa#6) sur les cuivres avec un snap, au lieu du seul accord
+  à froid. Les fonctions partagées (`rhodes`, `brass`, `snap`, `hz`) existaient déjà, rien de nouveau à écrire
+  côté instruments.
+- `pnpm sounds:challenge` relancé : seul `src/features/home/sounds/menu-start.wav` change (375 ms, contre la
+  version courte du 15/09) ; tous les autres fichiers, y compris les autres sons du menu et ceux du défi,
+  ressortent avec le même hash — la génération reste reproductible et n'a affecté que ce fichier.
+- Aucun changement côté `use-menu-sounds.ts` ni ailleurs : `playStart` continue de jouer `menu-start.wav`,
+  seul son contenu a changé.
+
+### 11.3 Comment c'est vérifié
+
+`pnpm type-check`, `pnpm eslint --fix` sur `generate-challenge-sounds.mjs` (0 warning), `pnpm test` (80/80,
+inchangé — aucun test ne couvre le contenu audio). Pas d'écoute possible côté agent : le choix vient entièrement
+du banc d'écoute (§11.1), pas d'une vérification a posteriori du fichier généré.
+
+### 11.4 Points ouverts pour la prochaine session
+
+- **Le Riff montant n'a pas été entendu sur téléphone** : à confirmer au Nothing Phone 2 avec le reste du menu
+  (§9.4/§9.5), en particulier que l'allongement de Start (375 ms contre le Cuivres plus court) ne retarde pas
+  trop la fermeture de la fenêtre perçue.
+- Les points ouverts précédents (§5, §6, §9.5, §10.4) restent valables.
+
+### 11.5 Fichiers à connaître
+
+- `scripts/generate-challenge-sounds.mjs` — recette de `menu-start.wav` (§11.2).
+- `src/features/home/sounds/menu-start.wav` — régénéré.
+- Artifact [Le Start à l'oreille](https://claude.ai/artifact/77a5vF9s7jaq4SdkY5Wphm) (§11.1) ; choix enregistré
+  dans sa base (`start-sound-bench/choice`).
+
+## 12. Le Riff montant non plus, retour à l'ancien banc, Start passe au Rhodes (nouvelle session, même jour)
+
+Le Riff montant (§11) ne convenait pas davantage. Plutôt qu'un troisième round de propositions inédites,
+l'utilisateur a demandé de rouvrir l'ancien banc à quatre directions du 15/09 (§9.1,
+[Le menu à l'oreille](https://claude.ai/artifact/TQXbMPa4iu7PcHe7iNz4Sa)) : Start n'y avait été essayé que sur
+**Cuivres** (§9-§11) ; restaient **Rythmique** (une version plus légère du même accord, jamais essayée),
+**Rhodes** (l'accord égrené au piano électrique) et **Vinyle** (la platine qui démarre). **Choix retenu : Rhodes.**
+Toujours rien de commité.
+
+### 12.1 Ce qui a été implémenté
+
+- **`scripts/generate-challenge-sounds.mjs`**, `menu-start.wav` : remplacé par la recette Rhodes de l'ancien
+  banc — un si13 sans fondamentale (la5, ré#6, sol#6) égrené en 5 ms sur l'électrique (`rhodes`, `g: 0.19,
+  decay: 0.5, index: 1.4`) plus un claquement de doigts (`snap`), au lieu de l'accord aux cuivres. `pnpm
+  sounds:challenge` relancé : seul ce fichier change (512 ms) ; tout le reste (défi et menu) ressort avec le
+  même hash.
+- **Aucun autre fichier touché pour le Restart** : la recherche a confirmé que `not-boring-challenge.tsx`
+  (`RESTART_SOUND = [menuStartSound]`, `useResultsSounds`) fait déjà rejouer `menu-start.wav` sur le Restart de
+  l'écran de résultats — un choix déjà pris avant cette session (commentaire du fichier : « the results
+  screen's Restart and back-to-challenges, with the home menu's own Start and Cancel sounds »). Changer la
+  recette du fichier suffit donc à mettre à jour Start (accueil) et Restart (résultats) en même temps, sans
+  toucher au code React.
+
+### 12.2 Comment c'est vérifié
+
+`pnpm type-check`, `pnpm eslint --fix` sur `generate-challenge-sounds.mjs` (0 warning), `pnpm test` (80/80,
+inchangé). Toujours aucune écoute possible côté agent : le choix vient entièrement de l'ancien banc (§9.1), pas
+d'une vérification a posteriori du fichier généré.
+
+### 12.3 Points ouverts pour la prochaine session
+
+- **Le Rhodes n'a été entendu ni sur Start ni sur Restart, ni en simulateur ni sur téléphone** : à confirmer au
+  doigt, y compris que 512 ms (plus long que Cuivres) ne retarde pas la fermeture de la fenêtre ni le rythme du
+  Restart, qui enchaîne directement sur un nouveau défi.
+- Si le Rhodes ne convient pas non plus, il reste **Rythmique** (version légère du même accord de cuivres,
+  jamais essayée) et **Vinyle** (la platine) dans le même ancien banc — pas besoin d'un nouvel artifact.
+- Les points ouverts précédents (§5, §6, §9.5, §10.4, §11.4) restent valables.
+
+### 12.4 Fichiers à connaître (en plus de §11.5)
+
+- `src/features/challenge/prototype-not-boring/not-boring-challenge.tsx` — `RESTART_SOUND`, `useResultsSounds`
+  (partage `menu-start.wav` entre Start et Restart, déjà en place avant cette session).
+
+## 13. Start (et Restart) essaient le son Fenêtre de Rhodes (nouvelle session, même jour)
+
+Le Rhodes de Start (§12) ne convenait pas non plus. Plutôt qu'une direction complète de plus, l'utilisateur a
+demandé d'essayer, pour Start (et donc Restart, qui partage le même fichier — §12.1), le son que Rhodes jouait
+pour un **autre** moment : **Fenêtre**, l'arpège sur lequel la case du nombre est tamponnée à l'atterrissage de
+la fenêtre de choix. Toujours rien de commité, pas encore de choix retenu — l'utilisateur voulait d'abord
+« voir ce que ça donne ».
+
+### 13.1 Ce qui a été implémenté
+
+- **`scripts/generate-challenge-sounds.mjs`**, `menu-start.wav` : recette remplacée par l'arpège Fenêtre de
+  Rhodes — l'accord la maj7 (la5, do#6, mi6, sol#6) roulé sur 18 ms (`rhodes`, `g: 0.15, decay: 0.55, index:
+  1.1`, un pas de 6 ms entre les notes) avec le tampon (`stamp(0, 0.22)`) par-dessous, au lieu de l'accord
+  Start propre à Rhodes (§12). `pnpm sounds:challenge` relancé : seul ce fichier change (570 ms) ; tout le
+  reste (défi et menu, y compris `menu-sheet.wav` qui garde sa propre recette batterie/Rythmique, jamais
+  touchée) ressort avec le même hash.
+- Restart en hérite automatiquement, comme au §12.1 : aucun autre fichier changé.
+
+### 13.2 Comment c'est vérifié
+
+`pnpm type-check`, `pnpm eslint --fix` sur `generate-challenge-sounds.mjs` (0 warning), `pnpm test` (80/80,
+inchangé).
+
+### 13.3 Points ouverts pour la prochaine session
+
+- **Pas de choix arrêté cette fois** : l'utilisateur voulait entendre ce que donne le son Fenêtre sur Start
+  avant de trancher. À rejouer sur téléphone (Start et Restart, jamais testés du tout jusqu'ici — §11.4/§12.3)
+  et à confronter, si besoin, aux directions encore non essayées pour Start dans l'ancien banc (Rythmique,
+  Vinyle — §12.3).
+- Les points ouverts précédents restent valables (§5, §6, §9.5, §10.4, §11.4, §12.3).

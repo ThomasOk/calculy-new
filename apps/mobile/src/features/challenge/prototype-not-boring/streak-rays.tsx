@@ -24,8 +24,8 @@ const TOTAL_MS = FRAME_MS * FRAMES + FADE_MS;
 const BASE_COUNT = 9;
 const COUNT_STEP = 3;
 const MAX_LEVEL = 2;
-// The giant number's half-height, as a share of its box's width: the number
-// fits 4 digits across (extruded-number.tsx), so 2 digits take about this.
+// The calculations' half-height, as a share of the box's width: roughly
+// what two digits take across it.
 const NUMBER_RADIUS = 0.22;
 // A line's point stops this far beyond the number's edge, plus up to SPREAD.
 const GAP = 24;

@@ -58,11 +58,17 @@ export function createSoundBank(sources: readonly number[]) {
   let last: number | null = null;
 
   // A new source for each play, as Web Audio means them: it goes once, and
-  // overlaps whatever else is playing.
+  // overlaps whatever else is playing. Once it has, it's taken off the
+  // output and off its own end event — a run plays a few dozen sounds, and
+  // a source left connected stays on the graph, listener and all.
   const start = (buffer: AudioBuffer) => {
     const source = audio.createBufferSource();
     source.buffer = buffer;
     source.connect(audio.destination);
+    source.onEnded = () => {
+      source.disconnect();
+      source.onEnded = null;
+    };
     source.start();
   };
 
